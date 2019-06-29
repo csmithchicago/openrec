@@ -1,6 +1,7 @@
 import tensorflow as tf
 from openrec.legacy.modules.fusions import Fusion
 
+
 class Concat(Fusion):
 
     """
@@ -15,7 +16,7 @@ class Concat(Fusion):
     reuse: bool, optional
         Whether or not to reuse module variables.
     """
-    
+
     def __init__(self, module_list, axis=1, scope=None, reuse=False):
 
         self._module_list = module_list

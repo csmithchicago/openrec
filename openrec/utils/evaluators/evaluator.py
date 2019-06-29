@@ -1,6 +1,4 @@
-
 class Evaluator(object):
-
     def __init__(self, etype, name):
 
         self.etype = etype
@@ -9,4 +7,3 @@ class Evaluator(object):
     def compute(self):
 
         return None
-

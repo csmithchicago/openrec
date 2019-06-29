@@ -52,14 +52,28 @@ class MultiLayerFC(Extraction):
         covariate shift. In International Conference on Machine Learning (pp. 448-456).
     """
 
-    def __init__(self, in_tensor, dims,
-                relu_in=False, relu_mid=True, relu_out=False,
-                dropout_in=None, dropout_mid=None, dropout_out=None, 
-                bias_in=True, bias_mid=True, bias_out=True, batch_norm=False,
-                train=True, l2_reg=None, scope=None, reuse=False):
+    def __init__(
+        self,
+        in_tensor,
+        dims,
+        relu_in=False,
+        relu_mid=True,
+        relu_out=False,
+        dropout_in=None,
+        dropout_mid=None,
+        dropout_out=None,
+        bias_in=True,
+        bias_mid=True,
+        bias_out=True,
+        batch_norm=False,
+        train=True,
+        l2_reg=None,
+        scope=None,
+        reuse=False,
+    ):
 
-        assert dims is not None, 'dims cannot be None'
-        assert in_tensor is not None, 'in_tensor cannot be None'
+        assert dims is not None, "dims cannot be None"
+        assert in_tensor is not None, "in_tensor cannot be None"
         self._in_tensor = in_tensor
         self._dims = dims
         self._relu_in = relu_in
@@ -74,13 +88,15 @@ class MultiLayerFC(Extraction):
             self._dropout_in = None
             self._dropout_mid = None
             self._dropout_out = None
-        
+
         self._batch_norm = batch_norm
         self._bias_in = bias_in
         self._bias_mid = bias_mid
         self._bias_out = bias_out
 
-        super(MultiLayerFC, self).__init__(train=train, l2_reg=l2_reg, scope=scope, reuse=reuse)
+        super(MultiLayerFC, self).__init__(
+            train=train, l2_reg=l2_reg, scope=scope, reuse=reuse
+        )
 
     def _build_shared_graph(self):
 
@@ -91,11 +107,17 @@ class MultiLayerFC(Extraction):
                 _in = tf.nn.relu(_in)
 
             if self._dropout_in is not None:
-                _in = tf.nn.dropout(_in, 1 - self._dropout_in) # Tensorflow uses keep_prob
-                
+                _in = tf.nn.dropout(
+                    _in, 1 - self._dropout_in
+                )  # Tensorflow uses keep_prob
+
             for index, _out_dim in enumerate(self._dims):
-                self._mat = tf.get_variable('FC_' + '_' + str(index), shape=[_in.shape[1], _out_dim], trainable=True,
-                                initializer=tf.contrib.layers.xavier_initializer())
+                self._mat = tf.get_variable(
+                    "FC_" + "_" + str(index),
+                    shape=[_in.shape[1], _out_dim],
+                    trainable=True,
+                    initializer=tf.contrib.layers.xavier_initializer(),
+                )
                 if index == 0:
                     add_bias = self._bias_in
                 elif index == len(self._dims) - 1:
@@ -104,8 +126,14 @@ class MultiLayerFC(Extraction):
                     add_bias = self._bias_mid
 
                 if add_bias:
-                    _bias = tf.get_variable('bias_' + '_' + str(index), shape=[_out_dim], trainable=True,
-                                    initializer=tf.constant_initializer(value=0.0, dtype=tf.float32))
+                    _bias = tf.get_variable(
+                        "bias_" + "_" + str(index),
+                        shape=[_out_dim],
+                        trainable=True,
+                        initializer=tf.constant_initializer(
+                            value=0.0, dtype=tf.float32
+                        ),
+                    )
                     _out = tf.matmul(_in, self._mat) + _bias
                 else:
                     _out = tf.matmul(_in, self._mat)
@@ -121,12 +149,22 @@ class MultiLayerFC(Extraction):
                     if self._dropout_out is not None:
                         _out = tf.nn.dropout(_out, 1 - self._dropout_out)
                 if self._batch_norm:
-                    _out = tf.contrib.layers.batch_norm(_out, fused=True, decay=0.95, 
-                                        center=True, scale=True, is_training=self._train, 
-                                        reuse=False, scope="bn_"+str(index), updates_collections=None)
+                    _out = tf.contrib.layers.batch_norm(
+                        _out,
+                        fused=True,
+                        decay=0.95,
+                        center=True,
+                        scale=True,
+                        is_training=self._train,
+                        reuse=False,
+                        scope="bn_" + str(index),
+                        updates_collections=None,
+                    )
                 _in = _out
             self._outputs.append(_out)
 
             if self._l2_reg is not None:
-                for var in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=var_scope.name):
+                for var in tf.get_collection(
+                    tf.GraphKeys.TRAINABLE_VARIABLES, scope=var_scope.name
+                ):
                     self._loss += self._l2_reg * tf.nn.l2_loss(var)

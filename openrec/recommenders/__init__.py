@@ -6,4 +6,3 @@ from openrec.recommenders.vbpr import VBPR
 from openrec.recommenders.vanilla_youtube_rec import VanillaYouTubeRec
 from openrec.recommenders.youtube_rec import YouTubeRec
 from openrec.recommenders.rnn_rec import RNNRec
-

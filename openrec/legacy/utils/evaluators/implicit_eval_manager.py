@@ -1,15 +1,14 @@
 import numpy as np
 from tqdm import tqdm
 
-class ImplicitEvalManager(object):
 
+class ImplicitEvalManager(object):
     def __init__(self, evaluators=[]):
 
         self.evaluators = evaluators
 
     def _full_rank(self, pos_samples, excl_pos_samples, predictions):
 
-        
         pos_samples = np.array(pos_samples, dtype=np.int32)
         pos_predictions = predictions[pos_samples]
 
@@ -41,10 +40,14 @@ class ImplicitEvalManager(object):
     def full_eval(self, pos_samples, excl_pos_samples, predictions):
 
         results = {}
-        rank_above, negative_num = self._full_rank(pos_samples, excl_pos_samples, predictions)
+        rank_above, negative_num = self._full_rank(
+            pos_samples, excl_pos_samples, predictions
+        )
         for evaluator in self.evaluators:
-            if evaluator.etype == 'rank':
-                results[evaluator.name] = evaluator.compute(rank_above=rank_above, negative_num=negative_num)
+            if evaluator.etype == "rank":
+                results[evaluator.name] = evaluator.compute(
+                    rank_above=rank_above, negative_num=negative_num
+                )
 
         return results
 
@@ -53,7 +56,9 @@ class ImplicitEvalManager(object):
         results = {}
         rank_above, negative_num = self._partial_rank(pos_scores, neg_scores)
         for evaluator in self.evaluators:
-            if evaluator.etype == 'rank':
-                results[evaluator.name] = evaluator.compute(rank_above=rank_above, negative_num=negative_num)
+            if evaluator.etype == "rank":
+                results[evaluator.name] = evaluator.compute(
+                    rank_above=rank_above, negative_num=negative_num
+                )
 
         return results

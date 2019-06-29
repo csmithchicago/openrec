@@ -1,6 +1,7 @@
 import numpy as np
 from openrec.legacy.utils import Dataset
 
+
 class ImplicitDataset(Dataset):
 
     """
@@ -32,23 +33,24 @@ class ImplicitDataset(Dataset):
     from 0 to :code:`total_number_of_users - 1`. The items should be indexed likewise.
     """
 
-    def __init__(self, raw_data, max_user, max_item, name='dataset'):
+    def __init__(self, raw_data, max_user, max_item, name="dataset"):
 
-        super(ImplicitDataset, self).__init__(raw_data=raw_data, max_user=max_user, 
-                                              max_item=max_item, name=name)
+        super(ImplicitDataset, self).__init__(
+            raw_data=raw_data, max_user=max_user, max_item=max_item, name=name
+        )
 
         self._gb_user_item = dict()
         for entry in self.raw_data:
-            if entry['user_id'] not in self._gb_user_item:
-                self._gb_user_item[entry['user_id']] = set()
-            self._gb_user_item[entry['user_id']].add(entry['item_id'])
-        
+            if entry["user_id"] not in self._gb_user_item:
+                self._gb_user_item[entry["user_id"]] = set()
+            self._gb_user_item[entry["user_id"]].add(entry["item_id"])
+
         self._gb_item_user = dict()
         for entry in self.raw_data:
-            if entry['item_id'] not in self._gb_item_user:
-                self._gb_item_user[entry['item_id']] = set()
-            self._gb_item_user[entry['item_id']].add(entry['user_id'])
-        
+            if entry["item_id"] not in self._gb_item_user:
+                self._gb_item_user[entry["item_id"]] = set()
+            self._gb_item_user[entry["item_id"]].add(entry["user_id"])
+
         self._num_user = len(self._gb_user_item)
         self._num_item = len(self._gb_item_user)
 

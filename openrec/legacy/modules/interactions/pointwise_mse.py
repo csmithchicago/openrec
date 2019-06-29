@@ -3,6 +3,7 @@ import tensorflow as tf
 from termcolor import colored
 from openrec.legacy.modules.interactions import Interaction
 
+
 class PointwiseMSE(Interaction):
 
     """
@@ -48,13 +49,25 @@ class PointwiseMSE(Interaction):
         In Proceedings of the 17th ACM SIGKDD international conference on Knowledge discovery and data mining (pp. 448-456). ACM.
     """
 
-    def __init__(self, user, item, item_bias, labels=None, a=1.0, b=1.0, 
-                sigmoid=False, train=True, batch_serving=True, scope=None, reuse=False):
+    def __init__(
+        self,
+        user,
+        item,
+        item_bias,
+        labels=None,
+        a=1.0,
+        b=1.0,
+        sigmoid=False,
+        train=True,
+        batch_serving=True,
+        scope=None,
+        reuse=False,
+    ):
 
-        assert train is not None, 'train cannot be None'
-        assert user is not None, 'user cannot be None'
-        assert item is not None, 'item cannot be None'
-        assert item_bias is not None, 'item_bias cannot be None'
+        assert train is not None, "train cannot be None"
+        assert user is not None, "user cannot be None"
+        assert item is not None, "item cannot be None"
+        assert item_bias is not None, "item_bias cannot be None"
 
         self._user = user
         self._item = item
@@ -63,7 +76,7 @@ class PointwiseMSE(Interaction):
         self._batch_serving = batch_serving
 
         if train:
-            assert labels is not None, 'labels cannot be None'
+            assert labels is not None, "labels cannot be None"
             self._labels = tf.reshape(tf.to_float(labels), (-1,))
             self._a = a
             self._b = b
@@ -75,28 +88,40 @@ class PointwiseMSE(Interaction):
         with tf.variable_scope(self._scope, reuse=self._reuse):
 
             labels_weight = (self._a - self._b) * self._labels + self._b
-            dot_user_item = tf.reduce_sum(tf.multiply(self._user, self._item),
-                                          axis=1, keep_dims=False, name="dot_user_item")
-            
+            dot_user_item = tf.reduce_sum(
+                tf.multiply(self._user, self._item),
+                axis=1,
+                keep_dims=False,
+                name="dot_user_item",
+            )
+
             if self._sigmoid:
-                prediction = tf.sigmoid(dot_user_item + tf.reshape(self._item_bias, [-1]))
+                prediction = tf.sigmoid(
+                    dot_user_item + tf.reshape(self._item_bias, [-1])
+                )
             else:
                 prediction = dot_user_item + tf.reshape(self._item_bias, [-1])
-                
+
             self._loss = tf.nn.l2_loss(labels_weight * (self._labels - prediction))
 
     def _build_serving_graph(self):
-        
+
         with tf.variable_scope(self._scope, reuse=self._reuse):
-            
+
             if self._batch_serving:
-                prediction = tf.matmul(self._user, self._item, transpose_b=True) + tf.reshape(self._item_bias, [-1])
+                prediction = tf.matmul(
+                    self._user, self._item, transpose_b=True
+                ) + tf.reshape(self._item_bias, [-1])
             else:
-                dot_user_item = tf.reduce_sum(tf.multiply(self._user, self._item),
-                                          axis=1, keep_dims=False, name="dot_user_item")
+                dot_user_item = tf.reduce_sum(
+                    tf.multiply(self._user, self._item),
+                    axis=1,
+                    keep_dims=False,
+                    name="dot_user_item",
+                )
                 prediction = dot_user_item + tf.reshape(self._item_bias, [-1])
-            
+
             if self._sigmoid:
                 prediction = tf.sigmoid(prediction)
-                
+
             self._outputs.append(prediction)

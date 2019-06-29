@@ -1,7 +1,7 @@
 import numpy as np
 
-class EvalManager(object):
 
+class EvalManager(object):
     def __init__(self, evaluators=[]):
 
         self.evaluators = evaluators
@@ -40,10 +40,14 @@ class EvalManager(object):
     def full_eval(self, pos_samples, excl_pos_samples, predictions):
 
         results = {}
-        rank_above, negative_num = self._full_rank(pos_samples, excl_pos_samples, predictions)
+        rank_above, negative_num = self._full_rank(
+            pos_samples, excl_pos_samples, predictions
+        )
         for evaluator in self.evaluators:
-            if evaluator.etype == 'rank':
-                results[evaluator.name] = evaluator.compute(rank_above=rank_above, negative_num=negative_num)
+            if evaluator.etype == "rank":
+                results[evaluator.name] = evaluator.compute(
+                    rank_above=rank_above, negative_num=negative_num
+                )
 
         return results
 
@@ -52,7 +56,9 @@ class EvalManager(object):
         results = {}
         rank_above, negative_num = self._partial_rank(pos_scores, neg_scores)
         for evaluator in self.evaluators:
-            if evaluator.etype == 'rank':
-                results[evaluator.name] = evaluator.compute(rank_above=rank_above, negative_num=negative_num)
+            if evaluator.etype == "rank":
+                results[evaluator.name] = evaluator.compute(
+                    rank_above=rank_above, negative_num=negative_num
+                )
 
         return results

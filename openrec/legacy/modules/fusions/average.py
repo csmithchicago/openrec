@@ -1,6 +1,7 @@
 import tensorflow as tf
 from openrec.legacy.modules.fusions import Fusion
 
+
 class Average(Fusion):
 
     """
@@ -17,9 +18,9 @@ class Average(Fusion):
     reuse: bool, optional
         Whether or not to reuse module variables.
     """
-    
+
     def __init__(self, module_list, weight=1.0, scope=None, reuse=False):
-        
+
         self._module_list = module_list
         self._weight = weight
 
@@ -30,5 +31,7 @@ class Average(Fusion):
         with tf.variable_scope(self._scope, reuse=self._reuse):
 
             outputs = sum([module.get_outputs() for module in self._module_list], [])
-            self._outputs.append(self._weight * tf.add_n(outputs) /  len(self._module_list))
+            self._outputs.append(
+                self._weight * tf.add_n(outputs) / len(self._module_list)
+            )
             self._loss = 0.0

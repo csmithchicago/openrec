@@ -1,8 +1,9 @@
 import tensorflow as tf
 import numpy as np
 
+
 class Recommender(object):
-    
+
     """
     The Recommender is the OpenRec abstraction [1]_ for recommendation algorithms.
 
@@ -99,22 +100,33 @@ class Recommender(object):
         In Proceedings of WSDM'18, February 5-9, 2018, Marina Del Rey, CA, USA.
     """
 
-    def __init__(self, batch_size, max_user, max_item, extra_interactions_funcs=[],
-                    extra_fusions_funcs=[], test_batch_size=None, l2_reg=None, opt='SGD', lr=None, 
-                    init_dict=None, sess_config=None):
-        
+    def __init__(
+        self,
+        batch_size,
+        max_user,
+        max_item,
+        extra_interactions_funcs=[],
+        extra_fusions_funcs=[],
+        test_batch_size=None,
+        l2_reg=None,
+        opt="SGD",
+        lr=None,
+        init_dict=None,
+        sess_config=None,
+    ):
+
         self._str_to_dtype = {
-            'float16': tf.float16,
-            'float32': tf.float32,
-            'float64': tf.float64,
-            'int8': tf.int8,
-            'int16': tf.int16,
-            'int32': tf.int32,
-            'int64': tf.int64,
-            'bool': tf.bool,
-            'string': tf.string
+            "float16": tf.float16,
+            "float32": tf.float32,
+            "float64": tf.float64,
+            "int8": tf.int8,
+            "int16": tf.int16,
+            "int32": tf.int32,
+            "int64": tf.int64,
+            "bool": tf.bool,
+            "string": tf.string,
         }
-        
+
         self._batch_size = batch_size
         self._test_batch_size = test_batch_size
         self._max_user = max_user
@@ -123,18 +135,20 @@ class Recommender(object):
         self._opt = opt
 
         if lr is None:
-            if self._opt == 'Adam':
+            if self._opt == "Adam":
                 self._lr = 0.001
-            elif self._opt == 'SGD':
+            elif self._opt == "SGD":
                 self._lr = 0.005
         else:
             self._lr = lr
 
         self._loss_nodes = []
-        self._inputs_store = {'train':{}, 'serving': {}}
-        self._modules_store = {'train':{}, 'serving': {}}
-        
-        self._interactions_funcs = [self._build_default_interactions] + extra_interactions_funcs
+        self._inputs_store = {"train": {}, "serving": {}}
+        self._modules_store = {"train": {}, "serving": {}}
+
+        self._interactions_funcs = [
+            self._build_default_interactions
+        ] + extra_interactions_funcs
         self._fusions_funcs = [self._build_default_fusions] + extra_fusions_funcs
 
         self._build_training_graph()
@@ -147,7 +161,6 @@ class Recommender(object):
         self._initialize(init_dict)
         self._saver = tf.train.Saver(max_to_keep=None)
 
-    
     def train(self, batch_data):
 
         """Train the model with an input batch_data.
@@ -158,8 +171,10 @@ class Recommender(object):
             A batch of training data.
         """
 
-        results = self._sess.run([self._train_op, self._loss] + self._post_training_ops,
-                                 feed_dict=self._input_mappings(batch_data, train=True))
+        results = self._sess.run(
+            [self._train_op, self._loss] + self._post_training_ops,
+            feed_dict=self._input_mappings(batch_data, train=True),
+        )
         return results[1]
 
     def serve(self, batch_data):
@@ -172,8 +187,9 @@ class Recommender(object):
             A batch of testing or serving data.
         """
 
-        scores = self._sess.run(self._scores, 
-                            feed_dict=self._input_mappings(batch_data, train=False))
+        scores = self._sess.run(
+            self._scores, feed_dict=self._input_mappings(batch_data, train=False)
+        )
 
         return scores
 
@@ -195,13 +211,16 @@ class Recommender(object):
         A list of Numpy arrays
             The outputs of the specified module.
         """
-        
+
         module = self._get_module(name=name, train=train)
-        
+
         if len(module.get_outputs()) == 0:
             return []
-        
-        return self._sess.run(module.get_outputs(), feed_dict=self._input_mappings(batch_data, train=train))
+
+        return self._sess.run(
+            module.get_outputs(),
+            feed_dict=self._input_mappings(batch_data, train=train),
+        )
 
     def compute_module_loss(self, name, batch_data, train=True):
 
@@ -223,11 +242,13 @@ class Recommender(object):
         """
 
         module = self._get_module(name=name, train=train)
-        
+
         if type(module.get_loss()) == float:
             return module.get_loss()
 
-        return self._sess.run(module.get_loss(), feed_dict=self._input_mappings(batch_data, train=train))
+        return self._sess.run(
+            module.get_loss(), feed_dict=self._input_mappings(batch_data, train=train)
+        )
 
     def save(self, save_dir, step):
 
@@ -254,9 +275,9 @@ class Recommender(object):
         """
 
         self._saver.restore(self._sess, load_dir)
-    
+
     def _add_module(self, name, module, train_loss=None, train=True):
-        
+
         """Add a module - overwrite if :code:`name` exists.
 
         Parameters
@@ -272,17 +293,17 @@ class Recommender(object):
         """
         if train_loss is None:
             train_loss = train
-            
+
         if train:
-            self._modules_store['train'][name] = module
+            self._modules_store["train"][name] = module
         else:
-            self._modules_store['serving'][name] = module
-        
+            self._modules_store["serving"][name] = module
+
         if train_loss:
             self._loss_nodes.append(module)
-    
+
     def _get_module(self, name, train=True):
-        
+
         """Retrieve a module.
 
         Parameters
@@ -298,12 +319,12 @@ class Recommender(object):
             The module specified by the name and the :code:`train` flag.
         """
         if train:
-            return self._modules_store['train'][name]
+            return self._modules_store["train"][name]
         else:
-            return self._modules_store['serving'][name]
-    
-    def _add_input(self, name, dtype='float32', shape=None, train=True):
-        
+            return self._modules_store["serving"][name]
+
+    def _add_input(self, name, dtype="float32", shape=None, train=True):
+
         """Add an input - overwrite if :code:`name` exists.
 
         Parameters
@@ -318,20 +339,24 @@ class Recommender(object):
         train: bool
             Specify training or serving graph.
         """
-        
+
         if train:
-            if dtype=='none':
-                self._inputs_store['train'][name] = None
+            if dtype == "none":
+                self._inputs_store["train"][name] = None
             else:
-                self._inputs_store['train'][name] = self._input(dtype=dtype, shape=shape, name=name+'_train')
+                self._inputs_store["train"][name] = self._input(
+                    dtype=dtype, shape=shape, name=name + "_train"
+                )
         else:
-            if dtype=='none':
-                self._inputs_store['serving'][name] = None
+            if dtype == "none":
+                self._inputs_store["serving"][name] = None
             else:
-                self._inputs_store['serving'][name] = self._input(dtype=dtype, shape=shape, name=name+'_serving')
-    
+                self._inputs_store["serving"][name] = self._input(
+                    dtype=dtype, shape=shape, name=name + "_serving"
+                )
+
     def _get_input(self, name, train=True):
-        
+
         """Retrieve an input.
 
         Parameters
@@ -347,10 +372,10 @@ class Recommender(object):
             The input specified by the name and the :code:`train` flag.
         """
         if train:
-            return self._inputs_store['train'][name]
+            return self._inputs_store["train"][name]
         else:
-            return self._inputs_store['serving'][name]
-        
+            return self._inputs_store["serving"][name]
+
     def _initialize(self, init_dict):
 
         """Initialize model parameters (do NOT override).
@@ -366,9 +391,8 @@ class Recommender(object):
         else:
             self._sess.run(tf.global_variables_initializer(), feed_dict=init_dict)
 
-    
-    def _input(self, dtype='float32', shape=None, name=None):
-        
+    def _input(self, dtype="float32", shape=None, name=None):
+
         """Define an input for the recommender.
 
         Parameters
@@ -391,7 +415,7 @@ class Recommender(object):
             return tf.placeholder(self._str_to_dtype[dtype], shape=shape, name=name)
 
     def _input_mappings(self, batch_data, train):
-        
+
         """Define mappings from input training batch to defined inputs.
 
         Parameters
@@ -420,7 +444,7 @@ class Recommender(object):
             An indicator for training or servining phase.
 
         """
-        
+
         self._build_user_inputs(train=train)
         self._build_item_inputs(train=train)
         self._build_extra_inputs(train=train)
@@ -439,7 +463,7 @@ class Recommender(object):
         pass
 
     def _build_item_inputs(self, train=True):
-        
+
         """Build inputs for items' data sources (should be overriden)
 
         Parameters
@@ -474,11 +498,11 @@ class Recommender(object):
             An indicator for training or servining phase.
 
         """
-        
+
         self._build_user_extractions(train=train)
         self._build_item_extractions(train=train)
         self._build_extra_extractions(train=train)
-        
+
     def _build_user_extractions(self, train=True):
 
         """Build extraction modules for users' data sources (should be overriden)
@@ -531,7 +555,7 @@ class Recommender(object):
 
         for func in self._fusions_funcs:
             func(train)
-    
+
     def _build_default_fusions(self, train=True):
 
         """Build default fusion modules (may be overriden).
@@ -555,7 +579,7 @@ class Recommender(object):
             An indicator for training or servining phase.
 
         """
-        
+
         for func in self._interactions_funcs:
             func(train)
 
@@ -587,16 +611,18 @@ class Recommender(object):
 
         """Build an optimizer for model training.
         """
-        
+
         self._loss = tf.add_n([node.get_loss() for node in self._loss_nodes])
 
-        if self._opt == 'SGD':
+        if self._opt == "SGD":
             optimizer = tf.train.GradientDescentOptimizer(self._lr)
         else:
             optimizer = tf.train.AdamOptimizer(learning_rate=self._lr)
 
         grad_var_list = optimizer.compute_gradients(self._loss)
-        self._train_op = optimizer.apply_gradients(self._grad_post_processing(grad_var_list))
+        self._train_op = optimizer.apply_gradients(
+            self._grad_post_processing(grad_var_list)
+        )
 
     def _grad_post_processing(self, grad_var_list):
 
@@ -632,7 +658,7 @@ class Recommender(object):
         """Build post-training graph (do NOT override).
         """
 
-        if hasattr(self, '_train_op'):
+        if hasattr(self, "_train_op"):
             self._post_training_ops = []
             with tf.control_dependencies([self._train_op]):
                 self._post_training_ops += self._build_post_training_ops()

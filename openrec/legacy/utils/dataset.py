@@ -1,8 +1,8 @@
 import numpy as np
 
+
 class Dataset(object):
 
-    
     """
     The Dataset class stores a sequence of data points for training or evaluation. 
 
@@ -29,19 +29,21 @@ class Dataset(object):
     based on the use cases of different recommendation systems. An user should be uniquely and numerically indexed 
     from 0 to :code:`total_number_of_users - 1`. The items should be indexed likewise.
     """
-    
-    def __init__(self, raw_data, max_user, max_item, name='dataset'):
-        
+
+    def __init__(self, raw_data, max_user, max_item, name="dataset"):
+
         self.name = name
         if type(raw_data) == np.ndarray:
             self.raw_data = raw_data
         else:
-            raise TypeError("Unsupported data input schema. Please use structured numpy array.")
-        
+            raise TypeError(
+                "Unsupported data input schema. Please use structured numpy array."
+            )
+
         self.data = None
         self._max_user = max_user
         self._max_item = max_item
-    
+
     def max_user(self):
         """Maximum number of users.
 
@@ -67,5 +69,5 @@ class Dataset(object):
         """
         if self.data is None:
             self.data = self.raw_data.copy()
-            
+
         np.random.shuffle(self.data)

@@ -1,26 +1,48 @@
 # from __future__ import print_function
 import tensorflow as tf
+
 # from termcolor import colored
 # from openrec.modules.extractions import Extraction
 
-def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_out=False,
-                dropout_in=None, dropout_mid=None, dropout_out=None, 
-                bias_in=True, bias_mid=True, bias_out=True, batch_norm=False,
-                train=True, l2_reg=None, scope=None):
-    
-    with tf.variable_scope(scope, default_name='multilayerfc', reuse=tf.AUTO_REUSE) as var_scope:
-        
+
+def MultiLayerFC(
+    in_tensor,
+    dims,
+    subgraph,
+    relu_in=False,
+    relu_mid=True,
+    relu_out=False,
+    dropout_in=None,
+    dropout_mid=None,
+    dropout_out=None,
+    bias_in=True,
+    bias_mid=True,
+    bias_out=True,
+    batch_norm=False,
+    train=True,
+    l2_reg=None,
+    scope=None,
+):
+
+    with tf.variable_scope(
+        scope, default_name="multilayerfc", reuse=tf.AUTO_REUSE
+    ) as var_scope:
+
         _in = in_tensor
 
         if relu_in:
             _in = tf.nn.relu(_in)
 
         if dropout_in is not None:
-            _in = tf.nn.dropout(_in, 1 - dropout_in) # Tensorflow uses keep_prob
+            _in = tf.nn.dropout(_in, 1 - dropout_in)  # Tensorflow uses keep_prob
 
         for index, _out_dim in enumerate(dims):
-            mat = tf.get_variable('FC_' + '_' + str(index), shape=[_in.shape[1], _out_dim], trainable=True,
-                            initializer=tf.contrib.layers.xavier_initializer())
+            mat = tf.get_variable(
+                "FC_" + "_" + str(index),
+                shape=[_in.shape[1], _out_dim],
+                trainable=True,
+                initializer=tf.contrib.layers.xavier_initializer(),
+            )
             if index == 0:
                 add_bias = bias_in
             elif index == len(dims) - 1:
@@ -29,8 +51,12 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
                 add_bias = bias_mid
 
             if add_bias:
-                _bias = tf.get_variable('bias_' + '_' + str(index), shape=[_out_dim], trainable=True,
-                                initializer=tf.constant_initializer(value=0.0, dtype=tf.float32))
+                _bias = tf.get_variable(
+                    "bias_" + "_" + str(index),
+                    shape=[_out_dim],
+                    trainable=True,
+                    initializer=tf.constant_initializer(value=0.0, dtype=tf.float32),
+                )
                 _out = tf.matmul(_in, mat) + _bias
             else:
                 _out = tf.matmul(_in, mat)
@@ -46,15 +72,24 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
                 if dropout_out is not None:
                     _out = tf.nn.dropout(_out, 1 - dropout_out)
             if batch_norm:
-                _out = tf.contrib.layers.batch_norm(_out, fused=True, decay=0.95, 
-                                    center=True, scale=True, is_training=train, 
-                                    scope="bn_"+str(index), updates_collections=None)
+                _out = tf.contrib.layers.batch_norm(
+                    _out,
+                    fused=True,
+                    decay=0.95,
+                    center=True,
+                    scale=True,
+                    is_training=train,
+                    scope="bn_" + str(index),
+                    updates_collections=None,
+                )
             _in = _out
-        
+
         if l2_reg is not None:
-            for var in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=var_scope.name):
+            for var in tf.get_collection(
+                tf.GraphKeys.TRAINABLE_VARIABLES, scope=var_scope.name
+            ):
                 subgraph.register_global_loss(l2_reg * tf.nn.l2_loss(var))
-        
+
         return _out
 
 
@@ -99,7 +134,7 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
 #         Scope for module variables.
 #     reuse: bool, optional
 #         Whether or not to reuse module variables.
-    
+
 #     References
 #     ----------
 #     .. [1] Ioffe, S. and Szegedy, C., 2015, June. Batch normalization: Accelerating deep network training by reducing internal \
@@ -108,7 +143,7 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
 
 #     def __init__(self, in_tensor, dims,
 #                 relu_in=False, relu_mid=True, relu_out=False,
-#                 dropout_in=None, dropout_mid=None, dropout_out=None, 
+#                 dropout_in=None, dropout_mid=None, dropout_out=None,
 #                 bias_in=True, bias_mid=True, bias_out=True, batch_norm=False,
 #                 train=True, l2_reg=None, scope=None, reuse=False):
 
@@ -128,7 +163,7 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
 #             self._dropout_in = None
 #             self._dropout_mid = None
 #             self._dropout_out = None
-        
+
 #         self._batch_norm = batch_norm
 #         self._bias_in = bias_in
 #         self._bias_mid = bias_mid
@@ -146,7 +181,7 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
 
 #             if self._dropout_in is not None:
 #                 _in = tf.nn.dropout(_in, 1 - self._dropout_in) # Tensorflow uses keep_prob
-                
+
 #             for index, _out_dim in enumerate(self._dims):
 #                 self._mat = tf.get_variable('FC_' + '_' + str(index), shape=[_in.shape[1], _out_dim], trainable=True,
 #                                 initializer=tf.contrib.layers.xavier_initializer())
@@ -175,8 +210,8 @@ def MultiLayerFC(in_tensor, dims, subgraph, relu_in=False, relu_mid=True, relu_o
 #                     if self._dropout_out is not None:
 #                         _out = tf.nn.dropout(_out, 1 - self._dropout_out)
 #                 if self._batch_norm:
-#                     _out = tf.contrib.layers.batch_norm(_out, fused=True, decay=0.95, 
-#                                         center=True, scale=True, is_training=self._train, 
+#                     _out = tf.contrib.layers.batch_norm(_out, fused=True, decay=0.95,
+#                                         center=True, scale=True, is_training=self._train,
 #                                         reuse=False, scope="bn_"+str(index), updates_collections=None)
 #                 _in = _out
 #             self._outputs.append(_out)

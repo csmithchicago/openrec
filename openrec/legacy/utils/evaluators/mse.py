@@ -1,11 +1,11 @@
 import numpy as np
 from openrec.legacy.utils.evaluators import Evaluator
 
-class MSE(Evaluator):
-    
-    def __init__(self, name='MSE'):
 
-        super(MSE, self).__init__(etype='regression', name=name)
+class MSE(Evaluator):
+    def __init__(self, name="MSE"):
+
+        super(MSE, self).__init__(etype="regression", name=name)
 
     def compute(self, predictions, labels):
 

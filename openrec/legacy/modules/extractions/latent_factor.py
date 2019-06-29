@@ -1,6 +1,7 @@
 import tensorflow as tf
 from openrec.legacy.modules.extractions import Extraction
 
+
 class LatentFactor(Extraction):
 
     """
@@ -23,13 +24,17 @@ class LatentFactor(Extraction):
         Whether or not to reuse module variables.
     """
 
-    def __init__(self, shape, init='normal', ids=None, l2_reg=None, scope=None, reuse=False):
+    def __init__(
+        self, shape, init="normal", ids=None, l2_reg=None, scope=None, reuse=False
+    ):
 
-        assert shape is not None, 'shape cannot be None'
+        assert shape is not None, "shape cannot be None"
 
-        if init == 'normal':
-            self._initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01, dtype=tf.float32)
-        elif init == 'zero':
+        if init == "normal":
+            self._initializer = tf.truncated_normal_initializer(
+                mean=0.0, stddev=0.01, dtype=tf.float32
+            )
+        elif init == "zero":
             self._initializer = tf.constant_initializer(value=0.0, dtype=tf.float32)
         self._shape = shape
         self._ids = ids
@@ -39,16 +44,20 @@ class LatentFactor(Extraction):
     def _build_shared_graph(self):
 
         with tf.variable_scope(self._scope, reuse=self._reuse):
-            
-            self._embedding = tf.get_variable('embedding', shape=self._shape, trainable=True,
-                                      initializer=self._initializer)
+
+            self._embedding = tf.get_variable(
+                "embedding",
+                shape=self._shape,
+                trainable=True,
+                initializer=self._initializer,
+            )
 
             if self._ids is not None:
                 self._outputs.append(tf.nn.embedding_lookup(self._embedding, self._ids))
 
                 if self._l2_reg is not None:
                     self._loss = self._l2_reg * tf.nn.l2_loss(self._outputs[0])
-                    
+
             else:
                 self._outputs.append(self._embedding)
 
@@ -69,8 +78,12 @@ class LatentFactor(Extraction):
             An operator for post-training execution.
         """
 
-        
         embedding_gather = tf.gather(self._embedding, indices=censor_id_list)
-        norm = tf.sqrt(tf.reduce_sum(tf.square(embedding_gather), axis=1, keep_dims=True))
-        return tf.scatter_update(self._embedding, indices=censor_id_list, updates=embedding_gather / tf.maximum(norm, max_norm))
-
+        norm = tf.sqrt(
+            tf.reduce_sum(tf.square(embedding_gather), axis=1, keep_dims=True)
+        )
+        return tf.scatter_update(
+            self._embedding,
+            indices=censor_id_list,
+            updates=embedding_gather / tf.maximum(norm, max_norm),
+        )
