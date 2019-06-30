@@ -1,3 +1,5 @@
+# Very Much a Work in Progress
+
 # Recommender Systems
 
 An open-source python library used for making recommendation systems.
@@ -12,7 +14,7 @@ Each recommender is modeled as a computational graph that consists of a structur
 First, clone OpenRec using `git`:
 
 ```sh
-git clone https://github.com/csmithchicago/openrec
+git clone https://github.com/csmithchicago/OpenRecTorch
 ```
 
 Then, `cd` to the OpenRec folder and run the install command:
